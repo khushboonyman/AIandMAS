@@ -1,0 +1,2 @@
+# AIandMAS
+mandatory assignment
