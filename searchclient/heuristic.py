@@ -2,12 +2,14 @@ from abc import ABCMeta, abstractmethod
 
 
 class Heuristic(metaclass=ABCMeta):
+    i=0
     def __init__(self, initial_state: 'State'):
         # Here's a chance to pre-process the static parts of the level.
         pass
     
     def h(self, state: 'State') -> 'int':
-        raise NotImplementedError
+        Heuristic.i+=1
+        return Heuristic.i
     
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass
