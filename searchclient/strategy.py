@@ -105,26 +105,34 @@ class StrategyBestFirst(Strategy):
     def __init__(self, heuristic: 'Heuristic'):
         super().__init__()
         self.heuristic = heuristic
-        self.frontier = PriorityQueue() #priority queue
+        self.frontier = deque() 
         self.frontier_set = set()
     
     def get_and_remove_leaf(self) -> 'State':
-        leaf = self.frontier.get()[1]
+        leaf = self.frontier.popleft()[1]
         self.frontier_set.remove(leaf)
         return leaf
     
     def add_to_frontier(self, state: 'State'):
-        self.frontier.put((self.heuristic.f(state),state))
+        testH = self.heuristic.f(state)
+        added = False
+        for index,j in enumerate(self.frontier) :
+            if j[0] > testH :
+                added = True
+                self.frontier.insert(index,[testH,state])
+                break
+        if not added :
+            self.frontier.append([testH,state])
         self.frontier_set.add(state)
     
     def in_frontier(self, state: 'State') -> 'bool':
         return state in self.frontier_set
     
     def frontier_count(self) -> 'int':
-        return self.frontier.qsize()
+        return len(self.frontier)
     
     def frontier_empty(self) -> 'bool':
-        return self.frontier.empty()
+        return len(self.frontier) == 0
     
     def __repr__(self):
         return 'Best-first Search using {}'.format(self.heuristic)

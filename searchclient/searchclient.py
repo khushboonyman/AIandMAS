@@ -41,7 +41,7 @@ class SearchClient:
             row = 0
             for line in linelist :
                 for col, char in enumerate(line):
-                    if char == '+': self.initial_state.walls[row][col] = True
+                    if char == '+': State.walls[row][col] = True
                     elif char in "0123456789":
                         if self.initial_state.agent_row is not None:
                             print('Error, encountered a second agent (client only supports one agent).', file=sys.stderr, flush=True)
@@ -49,7 +49,7 @@ class SearchClient:
                         self.initial_state.agent_row = row
                         self.initial_state.agent_col = col
                     elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ": self.initial_state.boxes[row][col] = char
-                    elif char in "abcdefghijklmnopqrstuvwxyz": self.initial_state.goals[row][col] = char
+                    elif char in "abcdefghijklmnopqrstuvwxyz": State.goals[row][col] = char
                     elif char == ' ':
                         # Free cell.
                         pass

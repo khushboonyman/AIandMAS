@@ -30,23 +30,17 @@ class State:
         self._hash = None
         if copy is None:
             self.agent_row = None
-            self.agent_col = None
-        
-            self.boxes = [[None for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
-            
+            self.agent_col = None        
+            self.boxes = [[None for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]            
             self.parent = None
-            self.action = None
-            
+            self.action = None            
             self.g = 0
         else:
             self.agent_row = copy.agent_row
-            self.agent_col = copy.agent_col
-            
-            self.boxes = [row[:] for row in copy.boxes]
-            
+            self.agent_col = copy.agent_col            
+            self.boxes = [row[:] for row in copy.boxes]            
             self.parent = copy.parent
-            self.action = copy.action
-            
+            self.action = copy.action            
             self.g = copy.g
     
     def get_children(self) -> '[State, ...]':
@@ -96,8 +90,7 @@ class State:
                         child.parent = self
                         child.action = action
                         child.g += 1
-                        children.append(child)
-        
+                        children.append(child)        
         State._RNG.shuffle(children)
         return children
     
