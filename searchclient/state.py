@@ -151,4 +151,3 @@ class State:
                 else: line.append(' ')
             lines.append(''.join(line))
         return '\n'.join(lines)
-

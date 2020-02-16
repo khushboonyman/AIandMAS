@@ -31,9 +31,9 @@ class Heuristic(metaclass=ABCMeta):
         #distance of agent to boxes and distance of agent to goals
         for ro in range(state.MAX_ROW) :
             for co in range(state.MAX_COL) :
-                if state.goals[ro][co] is not None and state.boxes[ro][co] is not None and state.goals[ro][co] == state.boxes[ro][co].casefold() :
+                """if state.goals[ro][co] is not None and state.boxes[ro][co] is not None and state.goals[ro][co] == state.boxes[ro][co].casefold() :
                     state.goals[ro][co] = None
-                    state.boxes[ro][co] = None
+                    state.boxes[ro][co] = None"""
                 if state.boxes[ro][co] is not None and state.boxes[ro][co] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" and state.goals[ro][co] != state.boxes[ro][co].casefold() :
                     calcdist = abs(ro-state.agent_row)+abs(co-state.agent_col)
                     if calcdist > 0 :

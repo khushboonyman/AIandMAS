@@ -136,4 +136,3 @@ class StrategyBestFirst(Strategy):
     
     def __repr__(self):
         return 'Best-first Search using {}'.format(self.heuristic)
-
