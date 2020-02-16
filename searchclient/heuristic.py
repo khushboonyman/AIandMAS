@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import sys
 
 class Heuristic(metaclass=ABCMeta):
     Goals = {}
@@ -7,6 +8,9 @@ class Heuristic(metaclass=ABCMeta):
         # Here's a chance to pre-process the static parts of the level.
         for ro in range(initial_state.MAX_ROW) :
             for co in range(initial_state.MAX_COL) :
+                if initial_state.goals[ro][co] is not None and initial_state.boxes[ro][co] is not None and initial_state.goals[ro][co] == initial_state.boxes[ro][co].casefold() :
+                    initial_state.goals[ro][co] = None
+                    initial_state.boxes[ro][co] = None
                 koal = initial_state.goals[ro][co]
                 if koal is not None and koal in "abcdefghijklmnopqrstuvwxyz":
                     if koal in Heuristic.Goals.keys() :
@@ -16,24 +20,48 @@ class Heuristic(metaclass=ABCMeta):
                     
     def h(self, state: 'State') -> 'int':
         Heuristic.heur=0
-        agentdist=[]
+        CopyGoals = {}
+        for key in Heuristic.Goals :
+            vList = []
+            for v in Heuristic.Goals[key] :
+                if state.boxes[v[0]][v[1]] == None or state.goals[v[0]][v[1]] != state.boxes[v[0]][v[1]].casefold() :
+                    vList.append(v)
+            CopyGoals[key] = vList
+        
+        #distance of agent to boxes and distance of agent to goals
+        for ro in range(state.MAX_ROW) :
+            for co in range(state.MAX_COL) :
+                if state.goals[ro][co] is not None and state.boxes[ro][co] is not None and state.goals[ro][co] == state.boxes[ro][co].casefold() :
+                    state.goals[ro][co] = None
+                    state.boxes[ro][co] = None
+                if state.boxes[ro][co] is not None and state.boxes[ro][co] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" and state.goals[ro][co] != state.boxes[ro][co].casefold() :
+                    calcdist = abs(ro-state.agent_row)+abs(co-state.agent_col)
+                    if calcdist > 0 :
+                        Heuristic.heur+=calcdist
+                if state.goals[ro][co] is not None and state.goals[ro][co] in "abcdefghijklmnopqrstuvwqyz" and state.boxes[ro][co] != state.goals[ro][co].capitalize() :
+                    calcdist = abs(ro-state.agent_row)+abs(co-state.agent_col)
+                    if calcdist > 0 :
+                        Heuristic.heur+=calcdist
+            
+        #distance of boxes to closest goals 
         for ro in range(state.MAX_ROW) :
             for co in range(state.MAX_COL) :
                 if state.boxes[ro][co] is not None and state.boxes[ro][co] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" and state.goals[ro][co] != state.boxes[ro][co].casefold() :
-                    dist=[]
-                    calcdist = abs(ro-state.agent_row)+abs(co-state.agent_col)
-                    if calcdist > 0 :
-                        agentdist.append(calcdist)
+                    #dist=[]
+                    #rowcol = []
                     value = state.boxes[ro][co].casefold()
-                    for x in Heuristic.Goals[value] :
+                    for index,x in enumerate(CopyGoals[value]) :
                         calcdist = abs(x[0]-ro)+abs(x[1]-co)
                         if calcdist > 0 :
-                            dist.append(calcdist)
-                    if len(dist) > 0 :
-                        Heuristic.heur += min(dist)
+                            Heuristic.heur+=calcdist
+                            #dist.append(calcdist)
+                            #rowcol.append(index)
+                    #if len(dist) > 0 :
+                    #    ind = dist.index(min(dist))
+                    #    Heuristic.heur += min(dist)
+                    #    delIndex = rowcol[ind]
+                    #    CopyGoals[value].pop(delIndex)
                     #print('heuristic!!',Heuristic.heur)
-        if len(agentdist) > 0 :
-            Heuristic.heur+=min(agentdist)
         #print('heuristic!!',Heuristic.heur)
         return Heuristic.heur
     

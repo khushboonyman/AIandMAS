@@ -117,7 +117,7 @@ class StrategyBestFirst(Strategy):
         testH = self.heuristic.f(state)
         added = False
         for index,j in enumerate(self.frontier) :
-            if j[0] > testH :
+            if testH <= j[0] :
                 added = True
                 self.frontier.insert(index,[testH,state])
                 break
