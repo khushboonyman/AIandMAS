@@ -139,6 +139,13 @@ class State:
         if self.boxes != other.boxes: return False
         return True
     
+    def __lt__(self,other):
+        if self is other: return False
+        if not isinstance(other, State): return False
+        if self.agent_row == other.agent_row and self.agent_col < other.agent_col : return True
+        if self.agent_col == other.agent_col and self.agent_row < other.agent_row : return True
+        return False
+    
     def __repr__(self):
         lines = []
         for row in range(State.MAX_ROW):
