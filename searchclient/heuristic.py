@@ -36,7 +36,8 @@ class Heuristic(metaclass=ABCMeta):
                         Boxes[bo].append([ro,co])
                     else :
                         Boxes[bo] = [[ro,co]]        
-        #agent to goal
+        
+        #agent to goals
         for key in CopyGoals :
             for cr in CopyGoals[key] :
                 if state.boxes[cr[0]][cr[1]]!=key.capitalize():
@@ -45,32 +46,43 @@ class Heuristic(metaclass=ABCMeta):
                         calcdist+=3
                     heur+=calcdist
         
+        Used = {}
         for key in Boxes :
+            Used[key] = list()   
             for index,cr in enumerate(Boxes[key]) :
                 #agent to boxes
                 if state.goals[cr[0]][cr[1]]!=key.casefold():
                     calcdist=(abs(cr[0]-state.agent_row)+abs(cr[1]-state.agent_col))
-                    heur+=calcdist
+                    heur+=calcdist    
                     calcdist=abs(state.agent_col-cr[1])
                     if calcdist > 1 :
                         heur+=calcdist
-                #goals to boxes
+                #all goals to all boxes
                 value = key.casefold()
+                dist=[]
                 for x in CopyGoals[value] :
-                    if not (x[0]==cr[0] and x[1]==cr[1]) :
+                    if x not in Boxes[key] :
                         calcdist=abs(cr[0]-x[0])+abs(cr[1]-x[1])
-                        heur+=calcdist
-                
-                  
-        #boxes to goals                            
-        """for ro in range(state.MAX_ROW) :
-            for co in range(state.MAX_COL) :
-                if state.boxes[ro][co] is not None and state.boxes[ro][co] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                    value = state.boxes[ro][co].casefold()
-                    for x in CopyGoals[value] :
-                        if state.boxes[x[0]][x[1]] is None or state.boxes[x[0]][x[1]].casefold() != state.goals[x[0]][x[1]] :
-                            calcdist = abs(x[0]-ro)+abs(x[1]-co)
-                            heur+=calcdist"""
+                        heur+=(calcdist)
+                        dist.append(calcdist)
+                Used[key].append(dist)
+        
+        #minimum distances of goals to boxes
+        for key in Used :
+            goalIndex = 0
+            boxIndex = 0
+            while len(Used[key]) > 0 :
+                minimum = 0
+                for index,listdist in enumerate(Used[key]) :
+                    if min(listdist) < minimum or minimum == 0 :
+                        minimum = min(listdist)
+                        goalIndex = listdist.index(minimum)
+                        boxIndex = index
+                Used[key].pop(boxIndex)
+                for listdist in Used[key] :
+                    listdist.pop(goalIndex)
+                heur+=(minimum)
+            
         return heur
     
     @abstractmethod
