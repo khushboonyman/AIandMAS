@@ -42,8 +42,8 @@ class Heuristic(metaclass=ABCMeta):
             for cr in CopyGoals[key] :
                 if state.boxes[cr[0]][cr[1]]!=key.capitalize():
                     calcdist=(abs(cr[0]-state.agent_row)+abs(cr[1]-state.agent_col))
-                    if calcdist==0:
-                        calcdist+=3
+                    #if calcdist==0:
+                    #    calcdist+=3
                     heur+=calcdist
         
         Used = {}
@@ -55,7 +55,7 @@ class Heuristic(metaclass=ABCMeta):
                     calcdist=(abs(cr[0]-state.agent_row)+abs(cr[1]-state.agent_col))
                     heur+=calcdist    
                     calcdist=abs(state.agent_col-cr[1])
-                    if calcdist > 1 :
+                    if calcdist > 2 :
                         heur+=calcdist
                 #all goals to all boxes
                 value = key.casefold()
