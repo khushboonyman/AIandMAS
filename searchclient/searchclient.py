@@ -17,14 +17,13 @@ class SearchClient:
             linelist = list()
             # Read lines for colors. There should be none of these in warmup levels.
             line = server_messages.readline().rstrip()
-            maxRow = 0
             while line :
-                maxRow+=1
                 linelist.append(line)
                 line = server_messages.readline().rstrip()
+                
             maxCol = max(len(l) for l in linelist)
+            maxRow = len(linelist)
             
-            #print(maxCol,maxRow)
             State.MAX_COL = maxCol
             State.MAX_ROW = maxRow
             
