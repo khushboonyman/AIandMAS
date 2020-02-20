@@ -3,86 +3,75 @@ import sys
 
 class Heuristic(metaclass=ABCMeta):
     Goals = {}
+    numOfGoals = 0
     def __init__(self, initial_state: 'State'):
         # Here's a chance to pre-process the static parts of the level.
-        for ro in range(initial_state.MAX_ROW) :
-            for co in range(initial_state.MAX_COL) :
-                if initial_state.goals[ro][co] is not None and initial_state.boxes[ro][co] is not None and initial_state.goals[ro][co] == initial_state.boxes[ro][co].casefold() :
-                    initial_state.goals[ro][co] = None
-                    initial_state.boxes[ro][co] = None
+        #dictionary of goals
+        for ro in range(1,initial_state.MAX_ROW-1) :
+            for co in range(1,initial_state.MAX_COL-1) :
                 koal = initial_state.goals[ro][co]
                 if koal is not None and koal in "abcdefghijklmnopqrstuvwxyz":
+                    Heuristic.numOfGoals+=1
                     if koal in Heuristic.Goals.keys() :
                         Heuristic.Goals[koal].append([ro,co])
                     else :
                         Heuristic.Goals[koal] = [[ro,co]]
                     
     def h(self, state: 'State') -> 'int':
-        heur=0
-        CopyGoals = {}
-        for key in Heuristic.Goals :
-            vList = []
-            for v in Heuristic.Goals[key] :
-                if state.boxes[v[0]][v[1]] == None or state.goals[v[0]][v[1]] != state.boxes[v[0]][v[1]].casefold() :
-                    vList.append(v)
-            CopyGoals[key] = vList
-            
+        heur=0            
+        #dictionary of boxes
         Boxes = {}
-        for ro in range(state.MAX_ROW) :
-            for co in range(state.MAX_COL) :
-                if state.boxes[ro][co] is not None and state.boxes[ro][co] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" and state.goals[ro][co] != state.boxes[ro][co].casefold() :
-                    bo = state.boxes[ro][co]
-                    if bo in Boxes.keys() :
-                        Boxes[bo].append([ro,co])
+        numOfBoxes=0
+        for ro in range(1,state.MAX_ROW-1) :
+            for co in range(1,state.MAX_COL-1) :
+                boal = state.boxes[ro][co]
+                if boal is not None and boal in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    boal = boal.casefold()
+                    numOfBoxes+=1
+                    if boal in Boxes.keys() :
+                        Boxes[boal].append([ro,co])
                     else :
-                        Boxes[bo] = [[ro,co]]        
-        
-        #agent to goals
-        for key in CopyGoals :
-            for cr in CopyGoals[key] :
-                if state.boxes[cr[0]][cr[1]]!=key.capitalize():
-                    calcdist=(abs(cr[0]-state.agent_row)+abs(cr[1]-state.agent_col))
-                    #if calcdist==0:
-                    #    calcdist+=3
-                    heur+=calcdist
-        
-        Used = {}
+                        Boxes[boal] = [[ro,co]]  
+                         
+        #minimum box and goal distances
         for key in Boxes :
-            Used[key] = list()   
-            for index,cr in enumerate(Boxes[key]) :
-                #agent to boxes
-                if state.goals[cr[0]][cr[1]]!=key.casefold():
-                    calcdist=(abs(cr[0]-state.agent_row)+abs(cr[1]-state.agent_col))
-                    heur+=calcdist    
-                    calcdist=abs(state.agent_col-cr[1])
-                    if calcdist > 2 :
-                        heur+=calcdist
-                #all goals to all boxes
-                value = key.casefold()
-                dist=[]
-                for x in CopyGoals[value] :
-                    if x not in Boxes[key] :
-                        calcdist=abs(cr[0]-x[0])+abs(cr[1]-x[1])
-                        heur+=(calcdist)
-                        dist.append(calcdist)
-                Used[key].append(dist)
+            BoxToGoal = []
+            agentBox = []
+            if key in Heuristic.Goals :
+                for bCR in Boxes[key] :
+                    dist=[]
+                    for gCR in Heuristic.Goals[key] :
+                        dist.append(abs(bCR[0]-gCR[0])+abs(bCR[1]-gCR[1]))
+                    agentBox.append(bCR)
+                    BoxToGoal.append(dist)
+                   
+                for x in range(numOfBoxes):
+                    minimum = -1
+                    minBoxToGoal = -1
+                    minBoxToGoalIn = -1
+                    for index,btg in enumerate(BoxToGoal) :
+                        if len(btg) > 0 :
+                            minValue = min(btg)
+                            if minimum == -1 or minValue < minimum :
+                                minimum = minValue
+                                minBoxToGoal = index
+                                minBoxToGoalIn = btg.index(minValue)
+                    if minBoxToGoal != -1 :
+                        #agent to box distance of the boxes that are closest to goal
+                        agentB = agentBox.pop(minBoxToGoal)
+                        if state.goals[agentB[0]][agentB[1]] is None or state.goals[agentB[0]][agentB[1]]!=state.boxes[agentB[0]][agentB[1]].casefold():
+                            calcdist=abs(state.agent_col-agentB[1])
+                            heur+=calcdist
+                            if calcdist==0:
+                                heur+=1
+                            if state.agent_col > agentB[1]:
+                                heur+=2                              
+                        BoxToGoal.pop(minBoxToGoal)
+                        heur+=minimum
+                        for btg in BoxToGoal :
+                            btg.pop(minBoxToGoalIn)
+       
         
-        #minimum distances of goals to boxes
-        for key in Used :
-            goalIndex = 0
-            boxIndex = 0
-            while len(Used[key]) > 0 :
-                minimum = 0
-                for index,listdist in enumerate(Used[key]) :
-                    if min(listdist) < minimum or minimum == 0 :
-                        minimum = min(listdist)
-                        goalIndex = listdist.index(minimum)
-                        boxIndex = index
-                Used[key].pop(boxIndex)
-                for listdist in Used[key] :
-                    listdist.pop(goalIndex)
-                heur+=(minimum)
-            
         return heur
     
     @abstractmethod
