@@ -1,78 +1,81 @@
 from abc import ABCMeta, abstractmethod
 import sys
 
+
 class Heuristic(metaclass=ABCMeta):
-    Goals = {}
+    Goals = {} #dictionary for goals
     numOfGoals = 0
     def __init__(self, initial_state: 'State'):
-        # Here's a chance to pre-process the static parts of the level.
-        #dictionary of goals
-        for ro in range(1,initial_state.MAX_ROW-1) :
-            for co in range(1,initial_state.MAX_COL-1) :
-                koal = initial_state.goals[ro][co]
-                if koal is not None and koal in "abcdefghijklmnopqrstuvwxyz":
+        # Here's a chance to pre-process the static parts of the level. x will always be the row and y will always be the column
+        #create a dictionary of goals, where key is the goal letter and value is the list of row,column combination
+        for x in range(1,initial_state.MAX_ROW-1) :   #dont need to read the walls, so range is 1 to MAX_ROW-1 same for column
+            for y in range(1,initial_state.MAX_COL-1) :
+                goalAtXY = initial_state.goals[x][y]
+                if goalAtXY is not None and goalAtXY in "abcdefghijklmnopqrstuvwxyz":
                     Heuristic.numOfGoals+=1
-                    if koal in Heuristic.Goals.keys() :
-                        Heuristic.Goals[koal].append([ro,co])
+                    if goalAtXY in Heuristic.Goals.keys() :
+                        Heuristic.Goals[goalAtXY].append([x,y])
                     else :
-                        Heuristic.Goals[koal] = [[ro,co]]
+                        Heuristic.Goals[goalAtXY] = [[x,y]]
                     
     def h(self, state: 'State') -> 'int':
-        heur=0            
-        #dictionary of boxes
-        Boxes = {}
+        sumOfDistances=0            
+        Boxes = {}  #dictionary of boxes
         numOfBoxes=0
-        for ro in range(1,state.MAX_ROW-1) :
-            for co in range(1,state.MAX_COL-1) :
-                boal = state.boxes[ro][co]
-                if boal is not None and boal in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                    boal = boal.casefold()
+        for x in range(1,state.MAX_ROW-1) : #here we are doing the same for boxes as we did for goals
+            for y in range(1,state.MAX_COL-1) :
+                boxAtXY = state.boxes[x][y]
+                if boxAtXY is not None and boxAtXY in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    boxAtXY = boxAtXY.casefold() #convert to lower case, so it is easier to process later
                     numOfBoxes+=1
-                    if boal in Boxes.keys() :
-                        Boxes[boal].append([ro,co])
+                    if boxAtXY in Boxes.keys() :
+                        Boxes[boxAtXY].append([x,y])
                     else :
-                        Boxes[boal] = [[ro,co]]  
+                        Boxes[boxAtXY] = [[x,y]]  
                          
-        #minimum box and goal distances
-        for key in Boxes :
-            BoxToGoal = []
-            agentBox = []
-            if key in Heuristic.Goals :
-                for bCR in Boxes[key] :
-                    dist=[]
-                    for gCR in Heuristic.Goals[key] :
-                        dist.append(abs(bCR[0]-gCR[0])+abs(bCR[1]-gCR[1]))
-                    agentBox.append(bCR)
-                    BoxToGoal.append(dist)
-                   
-                for x in range(numOfBoxes):
-                    minimum = -1
-                    minBoxToGoal = -1
-                    minBoxToGoalIn = -1
-                    for index,btg in enumerate(BoxToGoal) :
-                        if len(btg) > 0 :
-                            minValue = min(btg)
-                            if minimum == -1 or minValue < minimum :
-                                minimum = minValue
-                                minBoxToGoal = index
-                                minBoxToGoalIn = btg.index(minValue)
-                    if minBoxToGoal != -1 :
+        #find the distances between the closest box goal pairs 
+        for letter in Boxes :
+            AllBoxesToAllGoals = []
+            agentToBoxes = []
+            if letter in Heuristic.Goals :
+                for boxXY in Boxes[letter] :
+                    ABoxToAllGoals=[]
+                    for goalXY in Heuristic.Goals[letter] :
+                        ABoxToAllGoals.append(abs(boxXY[0]-goalXY[0])+abs(boxXY[1]-goalXY[1]))
+                    agentToBoxes.append(boxXY)
+                    AllBoxesToAllGoals.append(ABoxToAllGoals)
+                    
+                #process the matrix AllBoxesToAllGoals until we have found all minimum distances   
+                for counter in range(numOfBoxes):
+                    minDistPerBox = -1
+                    BoxIndex = -1
+                    GoalIndex = -1
+                    for BoxIndexTemp,BoxToAllGoals in enumerate(AllBoxesToAllGoals) :
+                        if len(BoxToAllGoals) > 0 :
+                            minDistPerBoxTemp = min(BoxToAllGoals)
+                            if minDistPerBox == -1 or minDistPerBoxTemp < minDistPerBox :
+                                minDistPerBox = minDistPerBoxTemp
+                                BoxIndex = BoxIndexTemp
+                                GoalIndex = BoxToAllGoals.index(minDistPerBoxTemp)
+                    
+                    if BoxIndex != -1 :
                         #agent to box distance of the boxes that are closest to goal
-                        agentB = agentBox.pop(minBoxToGoal)
-                        if state.goals[agentB[0]][agentB[1]] is None or state.goals[agentB[0]][agentB[1]]!=state.boxes[agentB[0]][agentB[1]].casefold():
-                            calcdist=abs(state.agent_col-agentB[1])
-                            heur+=calcdist
-                            if calcdist==0:
-                                heur+=1
-                            if state.agent_col > agentB[1]:
-                                heur+=2                              
-                        BoxToGoal.pop(minBoxToGoal)
-                        heur+=minimum
-                        for btg in BoxToGoal :
-                            btg.pop(minBoxToGoalIn)
+                        agentXY = agentToBoxes.pop(BoxIndex)
+                        if state.goals[agentXY[0]][agentXY[1]] is None or state.goals[agentXY[0]][agentXY[1]]!=state.boxes[agentXY[0]][agentXY[1]].casefold():
+                            distance=abs(state.agent_col-agentXY[1])
+                            sumOfDistances+=distance
+                            if distance==0:
+                                sumOfDistances+=1
+                            if state.agent_col > agentXY[1]:
+                                sumOfDistances+=2                              
+                        AllBoxesToAllGoals.pop(BoxIndex)
+                        #add box to goal distance to the heuristic
+                        sumOfDistances+=minDistPerBox
+                        for boxGoalPairs in AllBoxesToAllGoals :
+                            boxGoalPairs.pop(GoalIndex)  #remove the goal that has been assigned to closest box, from rest of boxes
        
         
-        return heur
+        return sumOfDistances
     
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass

@@ -141,7 +141,6 @@ class State:
     
     def __lt__(self,other):
         if self.boxes != other.boxes : return True
-        #if self.agent_col < other.agent_col or self.agent_row < other.agent_row : return True
         if self.agent_col != other.agent_col : return True
         if self.agent_row > other.agent_col : return True
         return False
